@@ -35,7 +35,7 @@ Default macros values should be adjusted according your environment.
 |Macro|Value|Description|
 |-----|-----|-----|
 |{$KUMA.API.KEY}|uk2_vWYsS2n-ozz6L6uw5uX5TYTA9McsytTHRoLNmeMC|Uptime Kuma API key.|
-|{$KUMA.METRICS.URL}|https://example.com/metrics)|Your metrics URL.|
+|{$KUMA.METRICS.URL}|https://example.com/metrics|Your metrics URL.|
 
 ## Template links
 
