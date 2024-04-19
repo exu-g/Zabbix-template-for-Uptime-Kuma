@@ -6,7 +6,7 @@ For Zabbix version: 6.4 and higher.
 HTTP is using for Uptime Kuma monitoring.
 
 
-The template is developed for monitoring state and latenct of all Uptime Kuma monitors:
+This template is developed for monitoring state and latenct of all Uptime Kuma monitors:
 * Monitor state
 * Monitor latency
 
@@ -23,7 +23,6 @@ Uptime Kuma
 Add API key:
 
 ![API key setup](https://github.com/volodinaleksey/Zabbix-template-for-Uptime-Kuma/assets/82817077/a12895e1-c8cd-4cd0-9542-e31d4a6e1134)
-
 
 ## Author
 
