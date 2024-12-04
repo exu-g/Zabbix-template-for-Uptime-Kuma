@@ -1,12 +1,12 @@
 zabbix_export:
-  version: '6.4'
+  version: "6.4"
   template_groups:
     - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
       name: Templates/Applications
   templates:
     - uuid: 92aab926ad964450968887f477defee6
-      template: 'Uptime Kuma by HTTP'
-      name: 'Uptime Kuma by HTTP'
+      template: "Uptime Kuma by HTTP"
+      name: "Uptime Kuma by HTTP"
       description: |
         Forked from https://github.com/volodinaleksey/Zabbix-template-for-Uptime-Kuma
 
@@ -15,30 +15,30 @@ zabbix_export:
         - name: Templates/Applications
       items:
         - uuid: 80c82faa57c2414386ad078f0cb85b8e
-          name: 'Kuma RAW metrics'
+          name: "Kuma RAW metrics"
           type: HTTP_AGENT
           key: kuma.metrics.raw
-          history: '0'
-          trends: '0'
           value_type: TEXT
+          history: "0"
+          trends: "0"
           authtype: BASIC
-          password: '{$KUMA.API.KEY}'
-          url: '{$KUMA.METRICS.URL}'
+          password: "{$KUMA.API.KEY}"
+          url: "{$KUMA.METRICS.URL}"
       discovery_rules:
         - uuid: e2c1b1a2e90c4f3997b5ea05df4e5142
-          name: 'Kuma metrics discovery'
+          name: "Kuma metrics discovery"
           type: HTTP_AGENT
           key: kuma.metrics.discover
           delay: 1h
           authtype: BASIC
-          password: '{$KUMA.API.KEY}'
+          password: "{$KUMA.API.KEY}"
           lifetime: 1h
           item_prototypes:
             - uuid: 195ad727d8e94ae8a45ca4aef45a993e
-              name: '{#MONITOR.NAME} response time'
+              name: "{#MONITOR.NAME} response time"
               type: DEPENDENT
-              key: 'monitor_response_time[{#MONITOR.NAME}]'
-              delay: '0'
+              key: "monitor_response_time[{#MONITOR.NAME}]"
+              delay: "0"
               preprocessing:
                 - type: JAVASCRIPT
                   parameters:
@@ -56,10 +56,10 @@ zabbix_export:
               master_item:
                 key: kuma.metrics.raw
             - uuid: 9da8c4fc23364bab80e7206d7d957d7f
-              name: '{#MONITOR.NAME} monitor status'
+              name: "{#MONITOR.NAME} monitor status"
               type: DEPENDENT
-              key: 'monitor_status[{#MONITOR.NAME}]'
-              delay: '0'
+              key: "monitor_status[{#MONITOR.NAME}]"
+              delay: "0"
               preprocessing:
                 - type: JAVASCRIPT
                   parameters:
@@ -76,19 +76,46 @@ zabbix_export:
                     - \0
               master_item:
                 key: kuma.metrics.raw
+            - uuid: 515e9ef180b24c10ba8d33a5c540631c
+              name: "{#MONITOR.NAME} certificate expiry"
+              type: DEPENDENT
+              key: "certificate_expiry[{#MONITOR.NAME}]"
+              delay: "0"
+              history: "1d"
+              trends: "0"
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      value = value.replace(/^(?!monitor_cert_days_remaining).*\n?/gm, "");
+                      return value;
+                - type: REGEX
+                  parameters:
+                    - '.*{#MONITOR.NAME}.*\n'
+                    - \0
+                - type: REGEX
+                  parameters:
+                    - \b(\w+)$
+                    - \0
+              master_item:
+                key: kuma.metrics.raw
               trigger_prototypes:
                 - uuid: 0395c3ef923b4ea994fd4d34b676a0a2
-                  expression: 'last(/Uptime Kuma by HTTP/monitor_status[{#MONITOR.NAME}]) <> 1'
-                  name: '{#MONITOR.NAME} is down'
+                  expression: "last(/Uptime Kuma by HTTP/monitor_status[{#MONITOR.NAME}]) <> 1"
+                  name: "{#MONITOR.NAME} is down"
                   priority: HIGH
-          url: '{$KUMA.METRICS.URL}'
+                - uuid: fc238fd3edb148f7a7f547ffebd2306f
+                  expression: "last(/Uptime Kuma by HTTP/certificate_expiry[{#MONITOR.NAME}]) <= {$KUMA.CERTIFICATE.DAYS}"
+                  name: "{#MONITOR.NAME} certificate expiring soon"
+                  priority: HIGH
+          url: "{$KUMA.METRICS.URL}"
           preprocessing:
             - type: JAVASCRIPT
               parameters:
                 - |
                   var metrics = value.replace(/^(?!monitor_status).*\n?/gm, "");
                   metrics = metrics.split("\n");
-                  
+
                   var lld = [];
                   var lines_num = metrics.length;
                   for (i = 0; i < lines_num - 1; i++)
@@ -100,7 +127,9 @@ zabbix_export:
                   }
                   return JSON.stringify(lld);
       macros:
-        - macro: '{$KUMA.API.KEY}'
+        - macro: "{$KUMA.API.KEY}"
           value: uk2_vWYsS2n-ozz6L6uw5uX5TYTA9McsytTHRoLNmeMC
-        - macro: '{$KUMA.METRICS.URL}'
-          value: 'https://example.com/metrics'
+        - macro: "{$KUMA.METRICS.URL}"
+          value: "https://example.com/metrics"
+        - macro: "{$KUMA.CERTIFICATE.DAYS}"
+          value: "21"
