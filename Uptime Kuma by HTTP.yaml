@@ -7,6 +7,8 @@ zabbix_export:
     - uuid: 92aab926ad964450968887f477defee6
       template: 'Uptime Kuma by HTTP'
       name: 'Uptime Kuma by HTTP'
+      description: |
+        Template source at https://github.com/exu-g/Zabbix-template-for-Uptime-Kuma
       groups:
         - name: Templates/Applications
       items:
@@ -72,10 +74,37 @@ zabbix_export:
                     - \0
               master_item:
                 key: kuma.metrics.raw
+            - uuid: 515e9ef180b24c10ba8d33a5c540631c
+              name: "{#MONITOR.NAME} certificate expiry"
+              type: DEPENDENT
+              key: "certificate_expiry[{#MONITOR.NAME}]"
+              delay: "0"
+              history: "1d"
+              trends: "0"
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      value = value.replace(/^(?!monitor_cert_days_remaining).*\n?/gm, "");
+                      return value;
+                - type: REGEX
+                  parameters:
+                    - '.*{#MONITOR.NAME}.*\n'
+                    - \0
+                - type: REGEX
+                  parameters:
+                    - \b(\w+)$
+                    - \0
+              master_item:
+                key: kuma.metrics.raw
               trigger_prototypes:
                 - uuid: 0395c3ef923b4ea994fd4d34b676a0a2
                   expression: 'last(/Uptime Kuma by HTTP/monitor_status[{#MONITOR.NAME}]) <> 1'
                   name: '{#MONITOR.NAME} is down'
+                  priority: HIGH
+                - uuid: fc238fd3edb148f7a7f547ffebd2306f
+                  expression: "last(/Uptime Kuma by HTTP/certificate_expiry[{#MONITOR.NAME}]) <= {$KUMA.CERTIFICATE.DAYS}"
+                  name: "{#MONITOR.NAME} certificate expiring soon"
                   priority: HIGH
           url: '{$KUMA.METRICS.URL}'
           preprocessing:
@@ -84,7 +113,7 @@ zabbix_export:
                 - |
                   var metrics = value.replace(/^(?!monitor_status).*\n?/gm, "");
                   metrics = metrics.split("\n");
-                  
+
                   var lld = [];
                   var lines_num = metrics.length;
                   for (i = 0; i < lines_num - 1; i++)
@@ -100,3 +129,5 @@ zabbix_export:
           value: uk2_vWYsS2n-ozz6L6uw5uX5TYTA9McsytTHRoLNmeMC
         - macro: '{$KUMA.METRICS.URL}'
           value: 'https://example.com/metrics'
+        - macro: "{$KUMA.CERTIFICATE.DAYS}"
+          value: "21"
