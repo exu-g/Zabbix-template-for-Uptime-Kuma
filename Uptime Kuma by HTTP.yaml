@@ -7,6 +7,10 @@ zabbix_export:
     - uuid: 92aab926ad964450968887f477defee6
       template: 'Uptime Kuma by HTTP'
       name: 'Uptime Kuma by HTTP'
+      description: |
+        Forked from https://github.com/volodinaleksey/Zabbix-template-for-Uptime-Kuma
+
+        Current source at https://github.com/exu-g/Zabbix-template-for-Uptime-Kuma
       groups:
         - name: Templates/Applications
       items:
