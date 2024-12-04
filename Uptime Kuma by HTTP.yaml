@@ -26,18 +26,18 @@ zabbix_export:
           url: "{$KUMA.METRICS.URL}"
       discovery_rules:
         - uuid: e2c1b1a2e90c4f3997b5ea05df4e5142
-          name: "Kuma metrics discovery"
+          name: "Kuma HTTP metrics discovery"
           type: HTTP_AGENT
-          key: kuma.metrics.discover
+          key: kuma.metrics.discover.http
           delay: 1h
           authtype: BASIC
           password: "{$KUMA.API.KEY}"
           lifetime: 1h
           item_prototypes:
             - uuid: 195ad727d8e94ae8a45ca4aef45a993e
-              name: "{#MONITOR.NAME} response time"
+              name: "{#HTTP_MONITOR.NAME} response time"
               type: DEPENDENT
-              key: "monitor_response_time[{#MONITOR.NAME}]"
+              key: "monitor_response_time[{#HTTP_MONITOR.NAME}]"
               delay: "0"
               preprocessing:
                 - type: JAVASCRIPT
@@ -47,7 +47,7 @@ zabbix_export:
                       return value;
                 - type: REGEX
                   parameters:
-                    - '.*{#MONITOR.NAME}.*\n'
+                    - '.*{#HTTP_MONITOR.NAME}.*\n'
                     - \0
                 - type: REGEX
                   parameters:
@@ -56,9 +56,9 @@ zabbix_export:
               master_item:
                 key: kuma.metrics.raw
             - uuid: 9da8c4fc23364bab80e7206d7d957d7f
-              name: "{#MONITOR.NAME} monitor status"
+              name: "{#HTTP_MONITOR.NAME} monitor status"
               type: DEPENDENT
-              key: "monitor_status[{#MONITOR.NAME}]"
+              key: "monitor_status[{#HTTP_MONITOR.NAME}]"
               delay: "0"
               preprocessing:
                 - type: JAVASCRIPT
@@ -68,7 +68,7 @@ zabbix_export:
                       return value;
                 - type: REGEX
                   parameters:
-                    - '.*{#MONITOR.NAME}.*\n'
+                    - '.*{#HTTP_MONITOR.NAME}.*\n'
                     - \0
                 - type: REGEX
                   parameters:
@@ -77,9 +77,9 @@ zabbix_export:
               master_item:
                 key: kuma.metrics.raw
             - uuid: 515e9ef180b24c10ba8d33a5c540631c
-              name: "{#MONITOR.NAME} certificate expiry"
+              name: "{#HTTP_MONITOR.NAME} certificate expiry"
               type: DEPENDENT
-              key: "certificate_expiry[{#MONITOR.NAME}]"
+              key: "certificate_expiry[{#HTTP_MONITOR.NAME}]"
               delay: "0"
               history: "1d"
               trends: "0"
@@ -91,7 +91,7 @@ zabbix_export:
                       return value;
                 - type: REGEX
                   parameters:
-                    - '.*{#MONITOR.NAME}.*\n'
+                    - '.*{#HTTP_MONITOR.NAME}.*\n'
                     - \0
                 - type: REGEX
                   parameters:
@@ -101,12 +101,12 @@ zabbix_export:
                 key: kuma.metrics.raw
               trigger_prototypes:
                 - uuid: 0395c3ef923b4ea994fd4d34b676a0a2
-                  expression: "last(/Uptime Kuma by HTTP/monitor_status[{#MONITOR.NAME}]) <> 1"
-                  name: "{#MONITOR.NAME} is down"
+                  expression: "last(/Uptime Kuma by HTTP/monitor_status[{#HTTP_MONITOR.NAME}]) <> 1"
+                  name: "{#HTTP_MONITOR.NAME} is down"
                   priority: HIGH
                 - uuid: fc238fd3edb148f7a7f547ffebd2306f
-                  expression: "last(/Uptime Kuma by HTTP/certificate_expiry[{#MONITOR.NAME}]) <= {$KUMA.CERTIFICATE.DAYS}"
-                  name: "{#MONITOR.NAME} certificate expiring soon"
+                  expression: "last(/Uptime Kuma by HTTP/certificate_expiry[{#HTTP_MONITOR.NAME}]) <= {$KUMA.CERTIFICATE.DAYS}"
+                  name: "{#HTTP_MONITOR.NAME} certificate expiring soon"
                   priority: HIGH
           url: "{$KUMA.METRICS.URL}"
           preprocessing:
@@ -114,6 +114,7 @@ zabbix_export:
               parameters:
                 - |
                   var metrics = value.replace(/^(?!monitor_status).*\n?/gm, "");
+                  metrics = metrics.replace(/^(?!.*monitor_type="http").*\n?/gm, "");
                   metrics = metrics.split("\n");
 
                   var lld = [];
@@ -122,7 +123,82 @@ zabbix_export:
                   {
                     var row = {};
                     var metric =  metrics[i].split("\"");
-                    row["{#MONITOR.NAME}"] = metric[1];
+                    row["{#HTTP_MONITOR.NAME}"] = metric[1];
+                    lld.push(row);
+                  }
+                  return JSON.stringify(lld);
+        - uuid: b95c30dddae84283aadcf3ede384b84f
+          name: "Kuma PING metrics discovery"
+          type: HTTP_AGENT
+          key: kuma.metrics.discover.ping
+          delay: 1h
+          authtype: BASIC
+          password: "{$KUMA.API.KEY}"
+          lifetime: 1h
+          item_prototypes:
+            - uuid: c6cab9bb95624a5eb3c43a0efa214830
+              name: "{#PING_MONITOR.NAME} response time"
+              type: DEPENDENT
+              key: "monitor_response_time[{#PING_MONITOR.NAME}]"
+              delay: "0"
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      value = value.replace(/^(?!monitor_response_time).*\n?/gm, "");
+                      return value;
+                - type: REGEX
+                  parameters:
+                    - '.*{#PING_MONITOR.NAME}.*\n'
+                    - \0
+                - type: REGEX
+                  parameters:
+                    - \b(\w+)$
+                    - \0
+              master_item:
+                key: kuma.metrics.raw
+            - uuid: 197a9dce15da4129a11900601025b832
+              name: "{#PING_MONITOR.NAME} monitor status"
+              type: DEPENDENT
+              key: "monitor_status[{#PING_MONITOR.NAME}]"
+              delay: "0"
+              preprocessing:
+                - type: JAVASCRIPT
+                  parameters:
+                    - |
+                      value = value.replace(/^(?!monitor_status).*\n?/gm, "");
+                      return value;
+                - type: REGEX
+                  parameters:
+                    - '.*{#PING_MONITOR.NAME}.*\n'
+                    - \0
+                - type: REGEX
+                  parameters:
+                    - \b(\w+)$
+                    - \0
+              master_item:
+                key: kuma.metrics.raw
+              trigger_prototypes:
+                - uuid: b2286ab808154fac9290dd47d1c60aa8
+                  expression: "last(/Uptime Kuma by HTTP/monitor_status[{#PING_MONITOR.NAME}]) <> 1"
+                  name: "{#PING_MONITOR.NAME} is down"
+                  priority: HIGH
+          url: "{$KUMA.METRICS.URL}"
+          preprocessing:
+            - type: JAVASCRIPT
+              parameters:
+                - |
+                  var metrics = value.replace(/^(?!monitor_status).*\n?/gm, "");
+                  metrics = metrics.replace(/^(?!.*monitor_type="ping").*\n?/gm, "");
+                  metrics = metrics.split("\n");
+
+                  var lld = [];
+                  var lines_num = metrics.length;
+                  for (i = 0; i < lines_num - 1; i++)
+                  {
+                    var row = {};
+                    var metric =  metrics[i].split("\"");
+                    row["{#PING_MONITOR.NAME}"] = metric[1];
                     lld.push(row);
                   }
                   return JSON.stringify(lld);
