@@ -36,6 +36,7 @@ Default macros values should be adjusted according your environment.
 |-----|-----|-----|
 |{$KUMA.API.KEY}|uk2_vWYsS2n-ozz6L6uw5uX5TYTA9McsytTHRoLNmeMC|Uptime Kuma API key.|
 |{$KUMA.METRICS.URL}|https://example.com/metrics|Your metrics URL.|
+|{$KUMA.CERTIFICATE.DAYS}|21|Min. days of validity left on a certificate.|
 
 ## Template links
 
@@ -51,7 +52,9 @@ There are no template links in this template.
 
 * Monitor status
 * Response time
+* Certificate Expiry
 
 ## Triggers
 
 * Monitor is down
+* Certificate expires soon
